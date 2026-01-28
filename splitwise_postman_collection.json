@@ -1,0 +1,784 @@
+{
+	"info": {
+		"_postman_id": "splitwise-api-test",
+		"name": "Splitwise API Test Collection",
+		"description": "Complete test flow for the Splitwise Go API.\n\nTest Users (from seed data):\n- User 1: john_doe (john@example.com)\n- User 2: jane_smith (jane@example.com)\n- User 3: bob_wilson (bob@example.com)\n\nSet X-Test-User-ID header to act as different users.",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+	},
+	"variable": [
+		{
+			"key": "baseUrl",
+			"value": "http://localhost:8080",
+			"type": "string"
+		},
+		{
+			"key": "userId",
+			"value": "1",
+			"type": "string"
+		}
+	],
+	"item": [
+		{
+			"name": "1. Health & Users",
+			"item": [
+				{
+					"name": "1.1 Health Check",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/health",
+							"host": ["{{baseUrl}}"],
+							"path": ["health"]
+						}
+					}
+				},
+				{
+					"name": "1.2 List All Users",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/api/v1/users",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "v1", "users"]
+						}
+					}
+				},
+				{
+					"name": "1.3 Create New User",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"username\": \"alice_wonder\",\n    \"email\": \"alice@example.com\"\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/api/v1/users",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "v1", "users"]
+						}
+					}
+				},
+				{
+					"name": "1.4 Get User by ID",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/api/v1/users/1",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "v1", "users", "1"]
+						}
+					}
+				}
+			]
+		},
+		{
+			"name": "2. Groups & Members",
+			"item": [
+				{
+					"name": "2.1 Create Group (as John)",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							},
+							{
+								"key": "X-Test-User-ID",
+								"value": "1",
+								"description": "Acting as John"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"name\": \"Apartment 101\",\n    \"description\": \"Shared apartment expenses\"\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/api/v1/groups",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "v1", "groups"]
+						}
+					}
+				},
+				{
+					"name": "2.2 View Group",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "X-Test-User-ID",
+								"value": "1"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/api/v1/groups/1",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "v1", "groups", "1"]
+						}
+					}
+				},
+				{
+					"name": "2.3 Invite Jane to Group",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							},
+							{
+								"key": "X-Test-User-ID",
+								"value": "1",
+								"description": "Acting as John (admin)"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"user_id\": 2\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/api/v1/groups/1/members",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "v1", "groups", "1", "members"]
+						}
+					}
+				},
+				{
+					"name": "2.4 Invite Bob to Group",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							},
+							{
+								"key": "X-Test-User-ID",
+								"value": "1"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"user_id\": 3\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/api/v1/groups/1/members",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "v1", "groups", "1", "members"]
+						}
+					}
+				},
+				{
+					"name": "2.5 View Group Members",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "X-Test-User-ID",
+								"value": "1"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/api/v1/groups/1/members",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "v1", "groups", "1", "members"]
+						}
+					}
+				},
+				{
+					"name": "2.6 Jane Accepts Invitation",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "X-Test-User-ID",
+								"value": "2",
+								"description": "Acting as Jane"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/api/v1/groups/1/accept",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "v1", "groups", "1", "accept"]
+						}
+					}
+				},
+				{
+					"name": "2.7 Bob Accepts Invitation",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "X-Test-User-ID",
+								"value": "3",
+								"description": "Acting as Bob"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/api/v1/groups/1/accept",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "v1", "groups", "1", "accept"]
+						}
+					}
+				},
+				{
+					"name": "2.8 List My Groups",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "X-Test-User-ID",
+								"value": "1"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/api/v1/groups",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "v1", "groups"]
+						}
+					}
+				}
+			]
+		},
+		{
+			"name": "3. Expenses (Split Strategies)",
+			"item": [
+				{
+					"name": "3.1 EVEN Split - John pays $90 dinner",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							},
+							{
+								"key": "X-Test-User-ID",
+								"value": "1",
+								"description": "John is paying"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"group_id\": 1,\n    \"description\": \"Dinner at Italian restaurant\",\n    \"amount\": 90.00,\n    \"split_type\": \"EVEN\",\n    \"participants\": [\n        {\"user_id\": 1},\n        {\"user_id\": 2},\n        {\"user_id\": 3}\n    ]\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/api/v1/expenses",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "v1", "expenses"]
+						},
+						"description": "Splits $90 evenly: Each owes $30, but John paid so Jane owes $30, Bob owes $30"
+					}
+				},
+				{
+					"name": "3.2 View Expense 1 (with splits)",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "X-Test-User-ID",
+								"value": "1"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/api/v1/expenses/1",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "v1", "expenses", "1"]
+						}
+					}
+				},
+				{
+					"name": "3.3 PERCENTAGE Split - Jane pays $100 groceries",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							},
+							{
+								"key": "X-Test-User-ID",
+								"value": "2",
+								"description": "Jane is paying"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"group_id\": 1,\n    \"description\": \"Weekly groceries\",\n    \"amount\": 100.00,\n    \"split_type\": \"PERCENTAGE\",\n    \"participants\": [\n        {\"user_id\": 1, \"percentage\": 50},\n        {\"user_id\": 2, \"percentage\": 30},\n        {\"user_id\": 3, \"percentage\": 20}\n    ]\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/api/v1/expenses",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "v1", "expenses"]
+						},
+						"description": "John owes 50%=$50, Jane paid (her 30%), Bob owes 20%=$20"
+					}
+				},
+				{
+					"name": "3.4 View Expense 2",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "X-Test-User-ID",
+								"value": "1"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/api/v1/expenses/2",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "v1", "expenses", "2"]
+						}
+					}
+				},
+				{
+					"name": "3.5 EXACT Split - Bob pays $75 utilities",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							},
+							{
+								"key": "X-Test-User-ID",
+								"value": "3",
+								"description": "Bob is paying"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"group_id\": 1,\n    \"description\": \"Electricity bill\",\n    \"amount\": 75.00,\n    \"split_type\": \"EXACT\",\n    \"participants\": [\n        {\"user_id\": 1, \"amount\": 30.00},\n        {\"user_id\": 2, \"amount\": 25.00},\n        {\"user_id\": 3, \"amount\": 20.00}\n    ]\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/api/v1/expenses",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "v1", "expenses"]
+						},
+						"description": "John owes exactly $30, Jane owes exactly $25, Bob paid (his $20 share)"
+					}
+				},
+				{
+					"name": "3.6 View Expense 3",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "X-Test-User-ID",
+								"value": "1"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/api/v1/expenses/3",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "v1", "expenses", "3"]
+						}
+					}
+				},
+				{
+					"name": "3.7 List All Expenses in Group",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "X-Test-User-ID",
+								"value": "1"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/api/v1/expenses/group/1",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "v1", "expenses", "group", "1"]
+						}
+					}
+				}
+			]
+		},
+		{
+			"name": "4. Net Balances",
+			"item": [
+				{
+					"name": "4.1 John's Net Balances",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "X-Test-User-ID",
+								"value": "1",
+								"description": "John's perspective"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/api/v1/settlements/balances",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "v1", "settlements", "balances"]
+						}
+					}
+				},
+				{
+					"name": "4.2 Jane's Net Balances",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "X-Test-User-ID",
+								"value": "2",
+								"description": "Jane's perspective"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/api/v1/settlements/balances",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "v1", "settlements", "balances"]
+						}
+					}
+				},
+				{
+					"name": "4.3 Bob's Net Balances",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "X-Test-User-ID",
+								"value": "3",
+								"description": "Bob's perspective"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/api/v1/settlements/balances",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "v1", "settlements", "balances"]
+						}
+					}
+				}
+			]
+		},
+		{
+			"name": "5. Payment Workflow (Individual Split)",
+			"item": [
+				{
+					"name": "5.1 Jane Marks Split as Paid",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "X-Test-User-ID",
+								"value": "2",
+								"description": "Jane (borrower) marks as paid"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/api/v1/expenses/splits/1/pay",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "v1", "expenses", "splits", "1", "pay"]
+						},
+						"description": "Split 1 is Jane's split from expense 1 (dinner)"
+					}
+				},
+				{
+					"name": "5.2 Check Split Status (should be PAID)",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "X-Test-User-ID",
+								"value": "1"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/api/v1/expenses/1",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "v1", "expenses", "1"]
+						}
+					}
+				},
+				{
+					"name": "5.3 John Confirms Payment Received",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "X-Test-User-ID",
+								"value": "1",
+								"description": "John (payer/creditor) confirms"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/api/v1/expenses/splits/1/confirm",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "v1", "expenses", "splits", "1", "confirm"]
+						}
+					}
+				},
+				{
+					"name": "5.4 Check Split Status (should be CONFIRMED)",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "X-Test-User-ID",
+								"value": "1"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/api/v1/expenses/1",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "v1", "expenses", "1"]
+						}
+					}
+				}
+			]
+		},
+		{
+			"name": "6. Settlement Workflow (Bulk)",
+			"item": [
+				{
+					"name": "6.1 Check Balances Before Settlement",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "X-Test-User-ID",
+								"value": "1"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/api/v1/settlements/balances",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "v1", "settlements", "balances"]
+						}
+					}
+				},
+				{
+					"name": "6.2 John Creates Settlement with Jane",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							},
+							{
+								"key": "X-Test-User-ID",
+								"value": "1",
+								"description": "John initiates"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"other_user_id\": 2\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/api/v1/settlements",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "v1", "settlements"]
+						},
+						"description": "System auto-determines payer/receiver based on net balance"
+					}
+				},
+				{
+					"name": "6.3 View Settlement Details",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "X-Test-User-ID",
+								"value": "1"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/api/v1/settlements/1",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "v1", "settlements", "1"]
+						}
+					}
+				},
+				{
+					"name": "6.4 Payer Marks Settlement as Paid",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "X-Test-User-ID",
+								"value": "1",
+								"description": "Must be the payer from settlement"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/api/v1/settlements/1/pay",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "v1", "settlements", "1", "pay"]
+						}
+					}
+				},
+				{
+					"name": "6.5 Receiver Confirms Payment",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "X-Test-User-ID",
+								"value": "2",
+								"description": "Must be the receiver from settlement"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/api/v1/settlements/1/confirm",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "v1", "settlements", "1", "confirm"]
+						}
+					}
+				},
+				{
+					"name": "6.6 Check Balances After Settlement",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "X-Test-User-ID",
+								"value": "1"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/api/v1/settlements/balances",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "v1", "settlements", "balances"]
+						},
+						"description": "John and Jane should be settled up now"
+					}
+				},
+				{
+					"name": "6.7 List All My Settlements",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "X-Test-User-ID",
+								"value": "1"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/api/v1/settlements",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "v1", "settlements"]
+						}
+					}
+				}
+			]
+		},
+		{
+			"name": "7. Notifications",
+			"item": [
+				{
+					"name": "7.1 List Notifications",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "X-Test-User-ID",
+								"value": "1"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/api/v1/notifications",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "v1", "notifications"]
+						}
+					}
+				},
+				{
+					"name": "7.2 Get Unread Count",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "X-Test-User-ID",
+								"value": "1"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/api/v1/notifications/unread-count",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "v1", "notifications", "unread-count"]
+						}
+					}
+				},
+				{
+					"name": "7.3 Mark All as Read",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "X-Test-User-ID",
+								"value": "1"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/api/v1/notifications/read-all",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "v1", "notifications", "read-all"]
+						}
+					}
+				}
+			]
+		},
+		{
+			"name": "8. Dispute Flow (Bonus)",
+			"item": [
+				{
+					"name": "8.1 Bob Disputes His Split",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							},
+							{
+								"key": "X-Test-User-ID",
+								"value": "3",
+								"description": "Bob (borrower) disputes"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"reason\": \"I was not at that dinner!\"\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/api/v1/expenses/splits/2/dispute",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "v1", "expenses", "splits", "2", "dispute"]
+						},
+						"description": "Split 2 is Bob's split from expense 1 (dinner)"
+					}
+				},
+				{
+					"name": "8.2 Check Expense (Bob's split should be DISPUTED)",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "X-Test-User-ID",
+								"value": "1"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/api/v1/expenses/1",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "v1", "expenses", "1"]
+						}
+					}
+				}
+			]
+		}
+	]
+}
