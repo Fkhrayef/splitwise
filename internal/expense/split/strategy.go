@@ -6,10 +6,6 @@ import (
 	"math"
 )
 
-// =============================================================================
-// STRATEGY PATTERN - Interface that all split strategies must implement
-// =============================================================================
-
 // SplitType defines the type of split strategy
 type SplitType string
 
@@ -33,12 +29,8 @@ type SplitOutput struct {
 }
 
 // Strategy is the interface that all split strategies must implement
-// This is the STRATEGY PATTERN - different algorithms implementing the same interface
 type Strategy interface {
 	// Calculate computes the split amounts for all participants
-	// totalAmount: The total expense amount to split
-	// payerID: The ID of the person who paid (excluded from owing)
-	// participants: List of participants with optional split-specific data
 	Calculate(totalAmount float64, payerID int64, participants []SplitInput) ([]SplitOutput, error)
 
 	// Type returns the type identifier for this strategy
@@ -48,12 +40,7 @@ type Strategy interface {
 	Validate(totalAmount float64, participants []SplitInput) error
 }
 
-// =============================================================================
-// FACTORY PATTERN - Creates the appropriate strategy based on type
-// =============================================================================
-
 // Factory creates split strategies based on the requested type
-// This is the FACTORY PATTERN - encapsulates object creation logic
 type Factory struct{}
 
 // NewSplitStrategyFactory creates a new factory instance
@@ -62,7 +49,6 @@ func NewSplitStrategyFactory() *Factory {
 }
 
 // Create returns the appropriate strategy implementation based on the type
-// This method encapsulates the creation logic and returns the interface type
 func (f *Factory) Create(splitType SplitType) (Strategy, error) {
 	switch splitType {
 	case SplitTypeEven:
@@ -81,23 +67,15 @@ func (f *Factory) CreateFromString(splitType string) (Strategy, error) {
 	return f.Create(SplitType(splitType))
 }
 
-// =============================================================================
-// COMMON ERRORS
-// =============================================================================
-
 var (
-	ErrNoParticipants         = errors.New("at least one participant is required")
-	ErrInvalidPercentages     = errors.New("percentages must sum to 100")
-	ErrInvalidExactAmounts    = errors.New("exact amounts must sum to total amount")
-	ErrNegativeAmount         = errors.New("amounts cannot be negative")
-	ErrMissingPercentage      = errors.New("percentage value required for all participants")
-	ErrMissingExactAmount     = errors.New("exact amount required for all participants")
-	ErrPercentageOutOfRange   = errors.New("percentage must be between 0 and 100")
+	ErrNoParticipants       = errors.New("at least one participant is required")
+	ErrInvalidPercentages   = errors.New("percentages must sum to 100")
+	ErrInvalidExactAmounts  = errors.New("exact amounts must sum to total amount")
+	ErrNegativeAmount       = errors.New("amounts cannot be negative")
+	ErrMissingPercentage    = errors.New("percentage value required for all participants")
+	ErrMissingExactAmount   = errors.New("exact amount required for all participants")
+	ErrPercentageOutOfRange = errors.New("percentage must be between 0 and 100")
 )
-
-// =============================================================================
-// HELPER FUNCTIONS
-// =============================================================================
 
 // roundToTwoDecimals rounds a float to 2 decimal places
 func roundToTwoDecimals(value float64) float64 {

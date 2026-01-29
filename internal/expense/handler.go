@@ -30,7 +30,6 @@ func (h *Handler) Routes() chi.Router {
 	r.Get("/{id}", h.GetByID)
 	r.Delete("/{id}", h.Delete)
 
-	// Group-based listing
 	r.Get("/group/{groupId}", h.ListByGroup)
 
 	// Split operations
@@ -42,19 +41,10 @@ func (h *Handler) Routes() chi.Router {
 }
 
 // Create handles POST /expenses
-// @Summary      Create a new expense
-// @Description  Create an expense with automatic split calculation using EVEN, PERCENTAGE, or EXACT strategy
-// @Tags         expenses
-// @Accept       json
-// @Produce      json
-// @Param        request body CreateExpenseRequest true "Expense creation request"
-// @Success      201 {object} response.APIResponse{data=ExpenseResponse}
-// @Failure      400 {object} response.APIResponse
-// @Router       /expenses [post]
 func (h *Handler) Create(w http.ResponseWriter, r *http.Request) {
 	payerID, ok := middleware.GetUserID(r.Context())
 	if !ok {
-		payerID = 1 // Default for development
+		payerID = 1
 	}
 
 	var req CreateExpenseRequest
@@ -63,7 +53,6 @@ func (h *Handler) Create(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Validate split type
 	validTypes := map[string]bool{"EVEN": true, "PERCENTAGE": true, "EXACT": true}
 	if !validTypes[req.SplitType] {
 		response.BadRequest(w, "Invalid split type. Must be EVEN, PERCENTAGE, or EXACT")
@@ -72,12 +61,10 @@ func (h *Handler) Create(w http.ResponseWriter, r *http.Request) {
 
 	result, err := h.service.CreateExpense(r.Context(), payerID, &req)
 	if err != nil {
-		// Check for validation errors from split strategies
 		response.BadRequest(w, err.Error())
 		return
 	}
 
-	// Build response
 	expenseResp := result.Expense.ToResponse()
 	expenseResp.Splits = make([]*SplitResponse, len(result.Splits))
 	for i, s := range result.Splits {
@@ -88,14 +75,6 @@ func (h *Handler) Create(w http.ResponseWriter, r *http.Request) {
 }
 
 // GetByID handles GET /expenses/{id}
-// @Summary      Get expense by ID
-// @Description  Get an expense with all its splits
-// @Tags         expenses
-// @Produce      json
-// @Param        id path int true "Expense ID"
-// @Success      200 {object} response.APIResponse{data=ExpenseResponse}
-// @Failure      404 {object} response.APIResponse
-// @Router       /expenses/{id} [get]
 func (h *Handler) GetByID(w http.ResponseWriter, r *http.Request) {
 	id, err := strconv.ParseInt(chi.URLParam(r, "id"), 10, 64)
 	if err != nil {
@@ -123,15 +102,6 @@ func (h *Handler) GetByID(w http.ResponseWriter, r *http.Request) {
 }
 
 // ListByGroup handles GET /expenses/group/{groupId}
-// @Summary      List expenses by group
-// @Description  Get a paginated list of expenses for a group
-// @Tags         expenses
-// @Produce      json
-// @Param        groupId path int true "Group ID"
-// @Param        page query int false "Page number" default(1)
-// @Param        per_page query int false "Items per page" default(20)
-// @Success      200 {object} response.APIResponse{data=[]ExpenseResponse}
-// @Router       /expenses/group/{groupId} [get]
 func (h *Handler) ListByGroup(w http.ResponseWriter, r *http.Request) {
 	groupID, err := strconv.ParseInt(chi.URLParam(r, "groupId"), 10, 64)
 	if err != nil {
@@ -172,15 +142,6 @@ func (h *Handler) ListByGroup(w http.ResponseWriter, r *http.Request) {
 }
 
 // Delete handles DELETE /expenses/{id}
-// @Summary      Delete an expense
-// @Description  Delete an expense (only if no splits are paid/confirmed)
-// @Tags         expenses
-// @Produce      json
-// @Param        id path int true "Expense ID"
-// @Success      200 {object} response.APIResponse
-// @Failure      404 {object} response.APIResponse
-// @Failure      409 {object} response.APIResponse
-// @Router       /expenses/{id} [delete]
 func (h *Handler) Delete(w http.ResponseWriter, r *http.Request) {
 	id, err := strconv.ParseInt(chi.URLParam(r, "id"), 10, 64)
 	if err != nil {
@@ -214,15 +175,6 @@ func (h *Handler) Delete(w http.ResponseWriter, r *http.Request) {
 }
 
 // MarkSplitAsPaid handles POST /expenses/splits/{splitId}/pay
-// @Summary      Mark split as paid
-// @Description  Borrower marks their split as paid (waiting for payer confirmation)
-// @Tags         splits
-// @Produce      json
-// @Param        splitId path int true "Split ID"
-// @Success      200 {object} response.APIResponse{data=SplitResponse}
-// @Failure      400 {object} response.APIResponse
-// @Failure      404 {object} response.APIResponse
-// @Router       /expenses/splits/{splitId}/pay [post]
 func (h *Handler) MarkSplitAsPaid(w http.ResponseWriter, r *http.Request) {
 	splitID, err := strconv.ParseInt(chi.URLParam(r, "splitId"), 10, 64)
 	if err != nil {
@@ -253,15 +205,6 @@ func (h *Handler) MarkSplitAsPaid(w http.ResponseWriter, r *http.Request) {
 }
 
 // ConfirmSplitPayment handles POST /expenses/splits/{splitId}/confirm
-// @Summary      Confirm split payment
-// @Description  Payer confirms they received the payment
-// @Tags         splits
-// @Produce      json
-// @Param        splitId path int true "Split ID"
-// @Success      200 {object} response.APIResponse{data=SplitResponse}
-// @Failure      400 {object} response.APIResponse
-// @Failure      404 {object} response.APIResponse
-// @Router       /expenses/splits/{splitId}/confirm [post]
 func (h *Handler) ConfirmSplitPayment(w http.ResponseWriter, r *http.Request) {
 	splitID, err := strconv.ParseInt(chi.URLParam(r, "splitId"), 10, 64)
 	if err != nil {
@@ -292,17 +235,6 @@ func (h *Handler) ConfirmSplitPayment(w http.ResponseWriter, r *http.Request) {
 }
 
 // DisputeSplit handles POST /expenses/splits/{splitId}/dispute
-// @Summary      Dispute a split
-// @Description  Borrower disputes their split with a reason
-// @Tags         splits
-// @Accept       json
-// @Produce      json
-// @Param        splitId path int true "Split ID"
-// @Param        request body DisputeSplitRequest true "Dispute reason"
-// @Success      200 {object} response.APIResponse{data=SplitResponse}
-// @Failure      400 {object} response.APIResponse
-// @Failure      404 {object} response.APIResponse
-// @Router       /expenses/splits/{splitId}/dispute [post]
 func (h *Handler) DisputeSplit(w http.ResponseWriter, r *http.Request) {
 	splitID, err := strconv.ParseInt(chi.URLParam(r, "splitId"), 10, 64)
 	if err != nil {

@@ -43,20 +43,9 @@ func (h *Handler) Routes() chi.Router {
 }
 
 // Create handles POST /groups
-// @Summary      Create a new group
-// @Description  Create a new group and add creator as admin
-// @Tags         groups
-// @Accept       json
-// @Produce      json
-// @Param        request body CreateGroupRequest true "Group creation request"
-// @Success      201 {object} response.APIResponse{data=GroupResponse}
-// @Failure      400 {object} response.APIResponse
-// @Router       /groups [post]
 func (h *Handler) Create(w http.ResponseWriter, r *http.Request) {
-	// Get creator ID from context (set by auth middleware)
 	creatorID, ok := middleware.GetUserID(r.Context())
 	if !ok {
-		// For now, use a default user ID if not authenticated
 		creatorID = 1
 	}
 
@@ -76,14 +65,6 @@ func (h *Handler) Create(w http.ResponseWriter, r *http.Request) {
 }
 
 // GetByID handles GET /groups/{id}
-// @Summary      Get group by ID
-// @Description  Get a group with all its members
-// @Tags         groups
-// @Produce      json
-// @Param        id path int true "Group ID"
-// @Success      200 {object} response.APIResponse{data=GroupResponse}
-// @Failure      404 {object} response.APIResponse
-// @Router       /groups/{id} [get]
 func (h *Handler) GetByID(w http.ResponseWriter, r *http.Request) {
 	idStr := chi.URLParam(r, "id")
 	id, err := strconv.ParseInt(idStr, 10, 64)
@@ -112,18 +93,10 @@ func (h *Handler) GetByID(w http.ResponseWriter, r *http.Request) {
 }
 
 // List handles GET /groups
-// @Summary      List my groups
-// @Description  Get a paginated list of groups for the current user
-// @Tags         groups
-// @Produce      json
-// @Param        page query int false "Page number" default(1)
-// @Param        per_page query int false "Items per page" default(20)
-// @Success      200 {object} response.APIResponse{data=[]GroupResponse}
-// @Router       /groups [get]
 func (h *Handler) List(w http.ResponseWriter, r *http.Request) {
 	userID, ok := middleware.GetUserID(r.Context())
 	if !ok {
-		userID = 1 // Default for development
+		userID = 1
 	}
 
 	page, _ := strconv.Atoi(r.URL.Query().Get("page"))
@@ -204,17 +177,6 @@ func (h *Handler) Delete(w http.ResponseWriter, r *http.Request) {
 }
 
 // AddMember handles POST /groups/{id}/members
-// @Summary      Add member to group
-// @Description  Invite a user to join the group
-// @Tags         groups
-// @Accept       json
-// @Produce      json
-// @Param        id path int true "Group ID"
-// @Param        request body AddMemberRequest true "Member to add"
-// @Success      201 {object} response.APIResponse{data=MemberResponse}
-// @Failure      404 {object} response.APIResponse
-// @Failure      409 {object} response.APIResponse
-// @Router       /groups/{id}/members [post]
 func (h *Handler) AddMember(w http.ResponseWriter, r *http.Request) {
 	idStr := chi.URLParam(r, "id")
 	groupID, err := strconv.ParseInt(idStr, 10, 64)
@@ -338,7 +300,7 @@ func (h *Handler) AcceptInvitation(w http.ResponseWriter, r *http.Request) {
 
 	userID, ok := middleware.GetUserID(r.Context())
 	if !ok {
-		userID = 1 // Default for development
+		userID = 1
 	}
 
 	member, err := h.service.AcceptInvitation(r.Context(), groupID, userID)

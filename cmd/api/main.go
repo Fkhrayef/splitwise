@@ -7,10 +7,8 @@ import (
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
 	"github.com/joho/godotenv"
-	httpSwagger "github.com/swaggo/http-swagger"
 
 	"github.com/fkhayef/splitwise/internal/config"
-	mw "github.com/fkhayef/splitwise/pkg/middleware"
 	"github.com/fkhayef/splitwise/internal/database"
 	"github.com/fkhayef/splitwise/internal/expense"
 	expensesplit "github.com/fkhayef/splitwise/internal/expense/split"
@@ -18,28 +16,8 @@ import (
 	"github.com/fkhayef/splitwise/internal/notification"
 	"github.com/fkhayef/splitwise/internal/settlement"
 	"github.com/fkhayef/splitwise/internal/user"
-
-	_ "github.com/fkhayef/splitwise/docs" // Swagger docs
+	mw "github.com/fkhayef/splitwise/pkg/middleware"
 )
-
-// @title           Splitwise API
-// @version         1.0
-// @description     A Splitwise-like expense splitting API demonstrating DI, Factory, and Strategy patterns.
-// @termsOfService  http://swagger.io/terms/
-
-// @contact.name   API Support
-// @contact.email  support@splitwise.local
-
-// @license.name  MIT
-// @license.url   https://opensource.org/licenses/MIT
-
-// @host      localhost:8080
-// @BasePath  /api/v1
-
-// @securityDefinitions.apikey BearerAuth
-// @in header
-// @name Authorization
-// @description Enter your bearer token in the format: Bearer {token}
 
 func main() {
 	// Load .env file
@@ -58,10 +36,6 @@ func main() {
 	defer db.Close()
 
 	log.Println("Connected to database successfully")
-
-	// ============================================
-	// DEPENDENCY INJECTION - Wiring up all layers
-	// ============================================
 
 	// Split Strategy Factory (Factory Pattern)
 	splitFactory := expensesplit.NewSplitStrategyFactory()
@@ -91,28 +65,17 @@ func main() {
 	notificationService := notification.NewService(notificationRepo)
 	notificationHandler := notification.NewHandler(notificationService)
 
-	// ============================================
-	// ROUTER SETUP
-	// ============================================
-
 	r := chi.NewRouter()
 
-	// Middleware
 	r.Use(middleware.Logger)
 	r.Use(middleware.Recoverer)
 	r.Use(middleware.RequestID)
-	r.Use(mw.TestUserMiddleware) // DEV ONLY: Allows X-Test-User-ID header
+	r.Use(mw.TestUserMiddleware)
 
-	// Health check
 	r.Get("/health", func(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusOK)
 		w.Write([]byte(`{"status":"ok"}`))
 	})
-
-	// Swagger UI
-	r.Get("/swagger/*", httpSwagger.Handler(
-		httpSwagger.URL("/swagger/doc.json"),
-	))
 
 	// API routes
 	r.Route("/api/v1", func(r chi.Router) {

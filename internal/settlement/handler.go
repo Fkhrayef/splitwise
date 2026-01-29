@@ -39,15 +39,6 @@ func (h *Handler) Routes() chi.Router {
 }
 
 // Create handles POST /settlements
-// @Summary      Create a settlement
-// @Description  Settle up with another user. System auto-calculates who pays whom based on net balance. Even $0 settlements are valid.
-// @Tags         settlements
-// @Accept       json
-// @Produce      json
-// @Param        request body CreateSettlementRequest true "Settlement request - just specify who you want to settle with"
-// @Success      201 {object} response.APIResponse{data=SettlementResponse}
-// @Failure      400 {object} response.APIResponse
-// @Router       /settlements [post]
 func (h *Handler) Create(w http.ResponseWriter, r *http.Request) {
 	payerID, ok := middleware.GetUserID(r.Context())
 	if !ok {
@@ -228,12 +219,6 @@ func (h *Handler) Reject(w http.ResponseWriter, r *http.Request) {
 }
 
 // GetNetBalances handles GET /settlements/balances
-// @Summary      Get net balances
-// @Description  Get net balances with all other users (who owes whom)
-// @Tags         settlements
-// @Produce      json
-// @Success      200 {object} response.APIResponse{data=[]NetBalanceResponse}
-// @Router       /settlements/balances [get]
 func (h *Handler) GetNetBalances(w http.ResponseWriter, r *http.Request) {
 	userID, ok := middleware.GetUserID(r.Context())
 	if !ok {
@@ -262,7 +247,6 @@ func (h *Handler) GetNetBalanceWithUser(w http.ResponseWriter, r *http.Request) 
 		return
 	}
 
-	// TODO: Get other user's username from user service/repo
 	balance, err := h.service.GetNetBalanceWithUser(r.Context(), userID, otherUserID, "User")
 	if err != nil {
 		response.InternalError(w, "Failed to get net balance")

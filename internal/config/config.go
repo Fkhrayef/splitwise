@@ -6,7 +6,6 @@ import "os"
 type Config struct {
 	DatabaseURL string
 	Port        string
-	JWTSecret   string
 }
 
 // Load reads configuration from environment variables
@@ -14,7 +13,6 @@ func Load() *Config {
 	return &Config{
 		DatabaseURL: getEnv("DATABASE_URL", "postgres://postgres:postgres@localhost:5432/splitwise?sslmode=disable"),
 		Port:        getEnv("PORT", "8080"),
-		JWTSecret:   getEnv("JWT_SECRET", "your-super-secret-key-change-in-production"),
 	}
 }
 

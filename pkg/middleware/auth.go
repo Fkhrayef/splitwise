@@ -4,9 +4,6 @@ import (
 	"context"
 	"net/http"
 	"strconv"
-	"strings"
-
-	"github.com/fkhayef/splitwise/pkg/response"
 )
 
 // ContextKey is a custom type for context keys to avoid collisions
@@ -17,54 +14,8 @@ const (
 	UserIDKey ContextKey = "user_id"
 )
 
-// AuthMiddleware is a placeholder for JWT authentication
-// TODO: Implement proper JWT validation
-func AuthMiddleware(next http.Handler) http.Handler {
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		authHeader := r.Header.Get("Authorization")
-		if authHeader == "" {
-			response.Unauthorized(w, "Authorization header required")
-			return
-		}
-
-		// Extract token from "Bearer <token>"
-		parts := strings.Split(authHeader, " ")
-		if len(parts) != 2 || parts[0] != "Bearer" {
-			response.Unauthorized(w, "Invalid authorization header format")
-			return
-		}
-
-		token := parts[1]
-
-		// TODO: Validate JWT token and extract user ID
-		// For now, we'll use a placeholder user ID
-		// In production, decode the JWT and extract the user_id claim
-		userID := validateToken(token)
-		if userID == 0 {
-			response.Unauthorized(w, "Invalid or expired token")
-			return
-		}
-
-		// Add user ID to context
-		ctx := context.WithValue(r.Context(), UserIDKey, userID)
-		next.ServeHTTP(w, r.WithContext(ctx))
-	})
-}
-
-// validateToken is a placeholder for JWT validation
-// TODO: Implement proper JWT validation
-func validateToken(token string) int64 {
-	// Placeholder: In production, decode and validate the JWT
-	// Return 0 if invalid, otherwise return the user ID
-	if token == "" {
-		return 0
-	}
-	// For development, accept any non-empty token and return a test user ID
-	return 1
-}
-
-// TestUserMiddleware allows setting user ID via X-Test-User-ID header (DEV ONLY)
-// This makes it easy to test as different users without real auth
+// TestUserMiddleware allows setting user ID via X-Test-User-ID header
+// This makes it easy to test as different users
 func TestUserMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		userIDStr := r.Header.Get("X-Test-User-ID")

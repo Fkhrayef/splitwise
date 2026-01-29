@@ -35,24 +35,12 @@ func (h *Handler) Routes() chi.Router {
 }
 
 // Create handles POST /users
-// @Summary      Create a new user
-// @Description  Create a new user with username and email
-// @Tags         users
-// @Accept       json
-// @Produce      json
-// @Param        request body CreateUserRequest true "User creation request"
-// @Success      201 {object} response.APIResponse{data=UserResponse}
-// @Failure      400 {object} response.APIResponse
-// @Failure      409 {object} response.APIResponse
-// @Router       /users [post]
 func (h *Handler) Create(w http.ResponseWriter, r *http.Request) {
 	var req CreateUserRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		response.BadRequest(w, "Invalid request body")
 		return
 	}
-
-	// TODO: Add validation using validator package
 
 	user, err := h.service.Create(r.Context(), &req)
 	if err != nil {
@@ -68,15 +56,6 @@ func (h *Handler) Create(w http.ResponseWriter, r *http.Request) {
 }
 
 // GetByID handles GET /users/{id}
-// @Summary      Get user by ID
-// @Description  Get a single user by their ID
-// @Tags         users
-// @Produce      json
-// @Param        id path int true "User ID"
-// @Success      200 {object} response.APIResponse{data=UserResponse}
-// @Failure      400 {object} response.APIResponse
-// @Failure      404 {object} response.APIResponse
-// @Router       /users/{id} [get]
 func (h *Handler) GetByID(w http.ResponseWriter, r *http.Request) {
 	idStr := chi.URLParam(r, "id")
 	id, err := strconv.ParseInt(idStr, 10, 64)
@@ -99,14 +78,6 @@ func (h *Handler) GetByID(w http.ResponseWriter, r *http.Request) {
 }
 
 // List handles GET /users
-// @Summary      List all users
-// @Description  Get a paginated list of all users
-// @Tags         users
-// @Produce      json
-// @Param        page query int false "Page number" default(1)
-// @Param        per_page query int false "Items per page" default(20)
-// @Success      200 {object} response.APIResponse{data=[]UserResponse}
-// @Router       /users [get]
 func (h *Handler) List(w http.ResponseWriter, r *http.Request) {
 	page, _ := strconv.Atoi(r.URL.Query().Get("page"))
 	perPage, _ := strconv.Atoi(r.URL.Query().Get("per_page"))
@@ -124,7 +95,6 @@ func (h *Handler) List(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Convert to response DTOs
 	userResponses := make([]*UserResponse, len(users))
 	for i, user := range users {
 		userResponses[i] = user.ToResponse()
@@ -142,17 +112,6 @@ func (h *Handler) List(w http.ResponseWriter, r *http.Request) {
 }
 
 // Update handles PUT /users/{id}
-// @Summary      Update a user
-// @Description  Update user's username or avatar
-// @Tags         users
-// @Accept       json
-// @Produce      json
-// @Param        id path int true "User ID"
-// @Param        request body UpdateUserRequest true "User update request"
-// @Success      200 {object} response.APIResponse{data=UserResponse}
-// @Failure      400 {object} response.APIResponse
-// @Failure      404 {object} response.APIResponse
-// @Router       /users/{id} [put]
 func (h *Handler) Update(w http.ResponseWriter, r *http.Request) {
 	idStr := chi.URLParam(r, "id")
 	id, err := strconv.ParseInt(idStr, 10, 64)
@@ -181,14 +140,6 @@ func (h *Handler) Update(w http.ResponseWriter, r *http.Request) {
 }
 
 // Delete handles DELETE /users/{id}
-// @Summary      Delete a user
-// @Description  Delete a user by their ID
-// @Tags         users
-// @Produce      json
-// @Param        id path int true "User ID"
-// @Success      200 {object} response.APIResponse
-// @Failure      400 {object} response.APIResponse
-// @Router       /users/{id} [delete]
 func (h *Handler) Delete(w http.ResponseWriter, r *http.Request) {
 	idStr := chi.URLParam(r, "id")
 	id, err := strconv.ParseInt(idStr, 10, 64)

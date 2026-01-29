@@ -1,7 +1,7 @@
 # 📚 Complete Guide: Building a Splitwise API with Go
 
 > **A comprehensive, educational guide to understanding every detail of this project.**
-> 
+>
 > This document teaches you Go concepts, design patterns, and best practices through the lens of a real-world expense-splitting application.
 
 ---
@@ -18,7 +18,7 @@
 8. [API Endpoints Reference](#8-api-endpoints-reference)
 9. [Split Strategies (Strategy Pattern)](#9-split-strategies-strategy-pattern)
 10. [Settlement System](#10-settlement-system)
-11. [Authentication System](#11-authentication-system)
+11. [User Identification](#11-user-identification)
 12. [How to Extend This Project](#12-how-to-extend-this-project)
 13. [Common Go Patterns & Idioms](#13-common-go-patterns--idioms)
 14. [Testing Your Code](#14-testing-your-code)
@@ -61,12 +61,12 @@ Go (Golang) is excellent for building APIs because:
 
 ## Required Software
 
-| Software | Version | Purpose |
-|----------|---------|---------|
-| Go | 1.21+ | The programming language |
-| PostgreSQL | 14+ | Database (can run in Docker) |
-| Git | Any | Version control |
-| Postman/curl | Any | API testing |
+| Software     | Version | Purpose                      |
+| ------------ | ------- | ---------------------------- |
+| Go           | 1.21+   | The programming language     |
+| PostgreSQL   | 14+     | Database (can run in Docker) |
+| Git          | Any     | Version control              |
+| Postman/curl | Any     | API testing                  |
 
 ## Project Setup Commands
 
@@ -81,7 +81,6 @@ go mod init github.com/yourusername/splitwise
 go get github.com/go-chi/chi/v5      # HTTP router
 go get github.com/lib/pq              # PostgreSQL driver
 go get github.com/joho/godotenv       # Environment variables
-go get github.com/swaggo/swag         # Swagger docs (optional)
 
 # 4. Verify dependencies
 go mod tidy
@@ -97,9 +96,6 @@ DATABASE_URL=postgres://postgres:postgres@localhost:5432/splitwise?sslmode=disab
 
 # Server port
 PORT=8080
-
-# JWT Secret (for future authentication)
-JWT_SECRET=your-super-secret-key
 ```
 
 ## Database Setup
@@ -128,11 +124,13 @@ package user  // This file belongs to the "user" package
 ```
 
 **Key Rules:**
+
 - All files in a directory must have the same package name
 - Package name usually matches the directory name
 - `package main` is special - it's the entry point of your program
 
 **In Our Project:**
+
 ```
 internal/user/       → package user
 internal/group/      → package group
@@ -146,14 +144,15 @@ cmd/api/             → package main
 import (
     "fmt"                           // Standard library
     "net/http"                      // Standard library
-    
+
     "github.com/go-chi/chi/v5"      // Third-party package
-    
+
     "github.com/yourname/splitwise/internal/user"  // Your own package
 )
 ```
 
 **Import Aliases:**
+
 ```go
 import (
     mw "github.com/yourname/splitwise/pkg/middleware"  // Alias: use mw.Function()
@@ -186,6 +185,7 @@ fmt.Println(user.Username)  // "john_doe"
 ```
 
 **Struct Tags:**
+
 ```go
 `json:"username"`           // JSON serialization name
 `json:"avatar,omitempty"`   // Omit if empty/zero value
@@ -212,10 +212,12 @@ response := user.ToResponse()
 ```
 
 **Receiver Types:**
+
 - `(u User)` - Value receiver (copies the struct)
 - `(u *User)` - Pointer receiver (modifies original, more efficient for large structs)
 
 **Rule of Thumb:** Use pointer receivers when:
+
 1. The method modifies the struct
 2. The struct is large
 3. Consistency (if one method uses pointer, all should)
@@ -241,6 +243,7 @@ func (s *EvenStrategy) Type() SplitType { return SplitTypeEven }
 ```
 
 **Go's Interface Philosophy:**
+
 - Interfaces are **implicitly implemented** (no `implements` keyword)
 - If a type has all the methods, it automatically satisfies the interface
 - This enables loose coupling and easy testing
@@ -254,14 +257,14 @@ Go doesn't have exceptions. Functions return errors explicitly:
 func (r *Repository) GetByID(ctx context.Context, id int64) (*User, error) {
     user := &User{}
     err := r.db.QueryRowContext(ctx, query, id).Scan(&user.ID, &user.Username)
-    
+
     if err != nil {
         if err == sql.ErrNoRows {
             return nil, nil  // Not found (not an error)
         }
         return nil, fmt.Errorf("failed to get user: %w", err)  // Wrap error
     }
-    
+
     return user, nil
 }
 
@@ -280,6 +283,7 @@ if user == nil {
 ```
 
 **Error Wrapping:**
+
 ```go
 // Wrap errors to add context
 return nil, fmt.Errorf("failed to create user: %w", err)
@@ -314,6 +318,7 @@ func copyUser(u User) {
 ```
 
 **In Our Project:**
+
 - `*sql.DB` - pointer to database connection (shared)
 - `*User` - pointer to user (avoid copying)
 - `*string` - pointer to string (allows nil for optional fields)
@@ -343,6 +348,7 @@ func (h *Handler) GetByID(w http.ResponseWriter, r *http.Request) {
 ## 4.1 Vertical Slicing
 
 Traditional layered architecture organizes by **technical concern**:
+
 ```
 ❌ Layered (Horizontal)
 ├── controllers/
@@ -358,6 +364,7 @@ Traditional layered architecture organizes by **technical concern**:
 ```
 
 Our project uses **vertical slicing** - organized by **feature**:
+
 ```
 ✅ Vertical Slicing
 ├── internal/
@@ -377,6 +384,7 @@ Our project uses **vertical slicing** - organized by **feature**:
 ```
 
 **Benefits of Vertical Slicing:**
+
 1. **Cohesion** - Related code stays together
 2. **Easy Navigation** - Find everything about "users" in one place
 3. **Independent Teams** - Different people can work on different features
@@ -451,10 +459,10 @@ splitwise/
 
 ## 4.3 The `internal` vs `pkg` Convention
 
-| Directory | Visibility | Purpose |
-|-----------|------------|---------|
+| Directory   | Visibility  | Purpose                                           |
+| ----------- | ----------- | ------------------------------------------------- |
 | `internal/` | **Private** | Code that shouldn't be imported by other projects |
-| `pkg/` | **Public** | Reusable code that other projects could use |
+| `pkg/`      | **Public**  | Reusable code that other projects could use       |
 
 Go enforces this! Code in `internal/` **cannot** be imported from outside your module.
 
@@ -469,6 +477,7 @@ Go enforces this! Code in `internal/` **cannot** be imported from outside your m
 Instead of a component creating its own dependencies, they are **injected** from outside.
 
 **Without DI (Bad):**
+
 ```go
 type UserService struct {}
 
@@ -476,17 +485,19 @@ func (s *UserService) GetUser(id int64) (*User, error) {
     // Service creates its own database connection - TIGHT COUPLING!
     db, _ := sql.Open("postgres", "connection-string")
     defer db.Close()
-    
+
     // Query database...
 }
 ```
 
 **Problems:**
+
 - Can't test without a real database
 - Can't change database implementation
 - Connection created on every call (inefficient)
 
 **With DI (Good):**
+
 ```go
 type UserService struct {
     repo *UserRepository  // Dependency is injected
@@ -503,6 +514,7 @@ func (s *UserService) GetUser(id int64) (*User, error) {
 ```
 
 **Benefits:**
+
 - **Testable** - inject a mock repository for testing
 - **Flexible** - swap implementations without changing service
 - **Explicit** - dependencies are visible in constructor
@@ -515,24 +527,24 @@ Look at `cmd/api/main.go`:
 func main() {
     // 1. Create the database connection (shared dependency)
     db, _ := database.NewPostgresConnection(cfg.DatabaseURL)
-    
+
     // 2. Create repositories (depend on db)
     userRepo := user.NewRepository(db)
     groupRepo := group.NewRepository(db)
     expenseRepo := expense.NewRepository(db)
-    
+
     // 3. Create services (depend on repositories)
     splitFactory := split.NewSplitStrategyFactory()
-    
+
     userService := user.NewService(userRepo)
     groupService := group.NewService(groupRepo)
     expenseService := expense.NewService(expenseRepo, splitFactory)  // Multiple deps!
-    
+
     // 4. Create handlers (depend on services)
     userHandler := user.NewHandler(userService)
     groupHandler := group.NewHandler(groupService)
     expenseHandler := expense.NewHandler(expenseService)
-    
+
     // 5. Wire up routes
     r.Mount("/users", userHandler.Routes())
 }
@@ -586,6 +598,7 @@ func (r *Repository) List(ctx context.Context, limit, offset int) ([]*User, erro
 ```
 
 **Benefits:**
+
 - **Abstraction** - Service doesn't know about SQL
 - **Testability** - Can mock the repository
 - **Single Responsibility** - Only handles data access
@@ -624,6 +637,7 @@ func (f *Factory) Create(splitType SplitType) (Strategy, error) {
 ```
 
 **Usage:**
+
 ```go
 // Service doesn't know which concrete strategy it gets
 factory := split.NewSplitStrategyFactory()
@@ -643,13 +657,14 @@ The **Strategy Pattern** defines a family of algorithms, encapsulates each one, 
 
 We have three ways to split an expense:
 
-| Strategy | Description | Example |
-|----------|-------------|---------|
-| EVEN | Split equally | $90 / 3 = $30 each |
+| Strategy   | Description          | Example               |
+| ---------- | -------------------- | --------------------- |
+| EVEN       | Split equally        | $90 / 3 = $30 each    |
 | PERCENTAGE | Split by percentages | 50%, 30%, 20% of $100 |
-| EXACT | Exact amounts | $50, $30, $20 |
+| EXACT      | Exact amounts        | $50, $30, $20         |
 
 **The Interface:**
+
 ```go
 type Strategy interface {
     Calculate(totalAmount float64, payerID int64, participants []SplitInput) ([]SplitOutput, error)
@@ -659,6 +674,7 @@ type Strategy interface {
 ```
 
 **How It's Used:**
+
 ```go
 func (s *Service) CreateExpense(ctx context.Context, payerID int64, req *CreateExpenseRequest) (*ExpenseWithSplits, error) {
     // 1. Factory creates the right strategy
@@ -666,13 +682,13 @@ func (s *Service) CreateExpense(ctx context.Context, payerID int64, req *CreateE
     if err != nil {
         return nil, err
     }
-    
+
     // 2. Strategy calculates splits (polymorphism!)
     splitOutputs, err := strategy.Calculate(req.Amount, payerID, inputs)
     if err != nil {
         return nil, err
     }
-    
+
     // 3. Save expense and splits...
 }
 ```
@@ -765,19 +781,19 @@ func NewRepository(db *sql.DB) *Repository {
 
 func (r *Repository) GetByID(ctx context.Context, id int64) (*User, error) {
     query := `SELECT id, username, email, avatar_url, created_at FROM users WHERE id = $1`
-    
+
     user := &User{}
     err := r.db.QueryRowContext(ctx, query, id).Scan(
         &user.ID, &user.Username, &user.Email, &user.AvatarURL, &user.CreatedAt,
     )
-    
+
     if err != nil {
         if err == sql.ErrNoRows {
             return nil, nil  // Not found
         }
         return nil, fmt.Errorf("failed to get user: %w", err)
     }
-    
+
     return user, nil
 }
 ```
@@ -807,7 +823,7 @@ func (s *Service) Create(ctx context.Context, req *CreateUserRequest) (*User, er
     if existing != nil {
         return nil, ErrEmailAlreadyInUse
     }
-    
+
     return s.repo.Create(ctx, req)
 }
 ```
@@ -840,7 +856,7 @@ func (h *Handler) Create(w http.ResponseWriter, r *http.Request) {
         response.BadRequest(w, "Invalid request body")
         return
     }
-    
+
     user, err := h.service.Create(r.Context(), &req)
     if err != nil {
         if errors.Is(err, ErrEmailAlreadyInUse) {
@@ -850,7 +866,7 @@ func (h *Handler) Create(w http.ResponseWriter, r *http.Request) {
         response.InternalError(w, "Failed to create user")
         return
     }
-    
+
     response.JSON(w, http.StatusCreated, user.ToResponse())
 }
 ```
@@ -876,6 +892,7 @@ func (h *Handler) Create(w http.ResponseWriter, r *http.Request) {
 ## Key Tables
 
 ### Users
+
 ```sql
 CREATE TABLE users (
     id SERIAL PRIMARY KEY,
@@ -887,6 +904,7 @@ CREATE TABLE users (
 ```
 
 ### Expenses
+
 ```sql
 CREATE TABLE expenses (
     id SERIAL PRIMARY KEY,
@@ -900,6 +918,7 @@ CREATE TABLE expenses (
 ```
 
 ### Splits
+
 ```sql
 CREATE TABLE splits (
     id SERIAL PRIMARY KEY,
@@ -918,77 +937,76 @@ CREATE TABLE splits (
 
 ## Base URL: `http://localhost:8080/api/v1`
 
-| Method | Endpoint | Description |
-|--------|----------|-------------|
-| **Users** | | |
-| POST | `/users` | Create user |
-| GET | `/users` | List users |
-| GET | `/users/{id}` | Get user |
-| **Groups** | | |
-| POST | `/groups` | Create group |
-| GET | `/groups/{id}` | Get group |
-| POST | `/groups/{id}/members` | Add member |
-| POST | `/groups/{id}/accept` | Accept invite |
-| **Expenses** | | |
-| POST | `/expenses` | Create expense |
-| GET | `/expenses/{id}` | Get expense |
-| GET | `/expenses/group/{groupId}` | List by group |
-| **Splits** | | |
-| POST | `/expenses/splits/{id}/pay` | Mark paid |
-| POST | `/expenses/splits/{id}/confirm` | Confirm |
-| POST | `/expenses/splits/{id}/dispute` | Dispute |
-| **Settlements** | | |
-| POST | `/settlements` | Create settlement |
-| POST | `/settlements/{id}/pay` | Mark paid |
-| POST | `/settlements/{id}/confirm` | Confirm |
-| GET | `/settlements/balances` | Get balances |
+| Method          | Endpoint                        | Description       |
+| --------------- | ------------------------------- | ----------------- |
+| **Users**       |                                 |                   |
+| POST            | `/users`                        | Create user       |
+| GET             | `/users`                        | List users        |
+| GET             | `/users/{id}`                   | Get user          |
+| **Groups**      |                                 |                   |
+| POST            | `/groups`                       | Create group      |
+| GET             | `/groups/{id}`                  | Get group         |
+| POST            | `/groups/{id}/members`          | Add member        |
+| POST            | `/groups/{id}/accept`           | Accept invite     |
+| **Expenses**    |                                 |                   |
+| POST            | `/expenses`                     | Create expense    |
+| GET             | `/expenses/{id}`                | Get expense       |
+| GET             | `/expenses/group/{groupId}`     | List by group     |
+| **Splits**      |                                 |                   |
+| POST            | `/expenses/splits/{id}/pay`     | Mark paid         |
+| POST            | `/expenses/splits/{id}/confirm` | Confirm           |
+| POST            | `/expenses/splits/{id}/dispute` | Dispute           |
+| **Settlements** |                                 |                   |
+| POST            | `/settlements`                  | Create settlement |
+| POST            | `/settlements/{id}/pay`         | Mark paid         |
+| POST            | `/settlements/{id}/confirm`     | Confirm           |
+| GET             | `/settlements/balances`         | Get balances      |
 
 ---
 
 # 9. Split Strategies
 
 ## EVEN Split
+
 Divides equally: `$90 / 3 = $30 each`
 
 ```json
 {
-    "split_type": "EVEN",
-    "amount": 90.00,
-    "participants": [
-        {"user_id": 1},
-        {"user_id": 2},
-        {"user_id": 3}
-    ]
+  "split_type": "EVEN",
+  "amount": 90.0,
+  "participants": [{ "user_id": 1 }, { "user_id": 2 }, { "user_id": 3 }]
 }
 ```
 
 ## PERCENTAGE Split
+
 By percentages (must sum to 100%):
 
 ```json
 {
-    "split_type": "PERCENTAGE",
-    "amount": 100.00,
-    "participants": [
-        {"user_id": 1, "percentage": 50},
-        {"user_id": 2, "percentage": 30},
-        {"user_id": 3, "percentage": 20}
-    ]
+  "split_type": "PERCENTAGE",
+  "amount": 100.0,
+  "participants": [
+    { "user_id": 1, "percentage": 50 },
+    { "user_id": 2, "percentage": 30 },
+    { "user_id": 3, "percentage": 20 }
+  ]
 }
 ```
 
 ## EXACT Split
+
 Specific amounts (must sum to total):
 
 ```json
 {
-    "split_type": "EXACT",
-    "amount": 75.00,
-    "participants": [
-        {"user_id": 1, "amount": 30.00},
-        {"user_id": 2, "amount": 25.00},
-        {"user_id": 3, "amount": 20.00}
-    ]
+  "split_type": "EXACT",
+  "amount": 75.0,
+  "participants": [
+    { "user_id": 1, "amount": 30.0 },
+    { "user_id": 2, "amount": 25.0 },
+    { "user_id": 3, "amount": 20.0 }
+  ]
 }
 ```
 
@@ -1012,17 +1030,17 @@ PENDING → PAID → CONFIRMED
 
 When creating a settlement, system determines payer/receiver:
 
-| Net Balance | Who Pays | Who Receives |
-|-------------|----------|--------------|
-| You owe $50 | You | Other user |
-| They owe $50 | Other user | You |
-| $0 (mutual) | You (initiator) | Other user |
+| Net Balance  | Who Pays        | Who Receives |
+| ------------ | --------------- | ------------ |
+| You owe $50  | You             | Other user   |
+| They owe $50 | Other user      | You          |
+| $0 (mutual)  | You (initiator) | Other user   |
 
 ---
 
-# 11. Authentication
+# 11. User Identification
 
-## Test Mode Header
+## Test User Header
 
 For development, use the `X-Test-User-ID` header:
 
@@ -1033,11 +1051,11 @@ curl -H "X-Test-User-ID: 2" http://localhost:8080/api/v1/groups
 
 ## Test Users (Seed Data)
 
-| ID | Username | Email |
-|----|----------|-------|
-| 1 | john_doe | john@example.com |
-| 2 | jane_smith | jane@example.com |
-| 3 | bob_wilson | bob@example.com |
+| ID  | Username   | Email            |
+| --- | ---------- | ---------------- |
+| 1   | john_doe   | john@example.com |
+| 2   | jane_smith | jane@example.com |
+| 3   | bob_wilson | bob@example.com  |
 
 ---
 
@@ -1057,6 +1075,7 @@ curl -H "X-Test-User-ID: 2" http://localhost:8080/api/v1/groups
 ## Adding a New Split Strategy
 
 1. Add constant in `strategy.go`:
+
    ```go
    SplitTypeShares SplitType = "SHARES"
    ```
@@ -1064,6 +1083,7 @@ curl -H "X-Test-User-ID: 2" http://localhost:8080/api/v1/groups
 2. Create `shares.go` implementing `Strategy` interface
 
 3. Register in Factory:
+
    ```go
    case SplitTypeShares:
        return &SharesStrategy{}, nil
@@ -1078,6 +1098,7 @@ curl -H "X-Test-User-ID: 2" http://localhost:8080/api/v1/groups
 # 13. Common Go Patterns
 
 ## Constructor Functions
+
 ```go
 func NewRepository(db *sql.DB) *Repository {
     return &Repository{db: db}
@@ -1085,6 +1106,7 @@ func NewRepository(db *sql.DB) *Repository {
 ```
 
 ## Error Variables
+
 ```go
 var ErrNotFound = errors.New("not found")
 
@@ -1092,12 +1114,14 @@ if errors.Is(err, ErrNotFound) { ... }
 ```
 
 ## Defer for Cleanup
+
 ```go
 rows, _ := db.Query(...)
 defer rows.Close()  // Always runs
 ```
 
 ## Table-Driven Tests
+
 ```go
 tests := []struct {
     name     string
@@ -1117,6 +1141,7 @@ for _, tt := range tests {
 # 14. Testing
 
 ## Run Tests
+
 ```bash
 go test ./...                    # All tests
 go test -v ./internal/expense/   # Verbose, specific package
@@ -1127,35 +1152,36 @@ go test -cover ./...             # With coverage
 
 # 15. Troubleshooting
 
-| Error | Cause | Solution |
-|-------|-------|----------|
-| "package X is not in GOROOT" | Import path mismatch | Check `go.mod` module name |
-| "sql: no rows" | Query returned nothing | Handle `sql.ErrNoRows` |
-| "connection refused" | DB not running | Check Docker/connection string |
+| Error                        | Cause                  | Solution                       |
+| ---------------------------- | ---------------------- | ------------------------------ |
+| "package X is not in GOROOT" | Import path mismatch   | Check `go.mod` module name     |
+| "sql: no rows"               | Query returned nothing | Handle `sql.ErrNoRows`         |
+| "connection refused"         | DB not running         | Check Docker/connection string |
 
 ---
 
 # 16. Glossary
 
-| Term | Definition |
-|------|------------|
-| Context | Carries deadlines and cancellation signals |
-| DI | Dependency Injection - passing dependencies from outside |
-| DTO | Data Transfer Object - API request/response structs |
-| Factory | Creates objects without exposing creation logic |
-| Handler | Processes HTTP requests |
-| Interface | Contract defining method signatures |
-| Repository | Abstracts data access layer |
-| Service | Contains business logic |
-| Strategy | Interchangeable algorithm pattern |
-| Struct | Custom type grouping related data |
-| Vertical Slicing | Organizing code by feature |
+| Term             | Definition                                               |
+| ---------------- | -------------------------------------------------------- |
+| Context          | Carries deadlines and cancellation signals               |
+| DI               | Dependency Injection - passing dependencies from outside |
+| DTO              | Data Transfer Object - API request/response structs      |
+| Factory          | Creates objects without exposing creation logic          |
+| Handler          | Processes HTTP requests                                  |
+| Interface        | Contract defining method signatures                      |
+| Repository       | Abstracts data access layer                              |
+| Service          | Contains business logic                                  |
+| Strategy         | Interchangeable algorithm pattern                        |
+| Struct           | Custom type grouping related data                        |
+| Vertical Slicing | Organizing code by feature                               |
 
 ---
 
 # Congratulations!
 
 You've learned:
+
 - Go fundamentals
 - Project architecture
 - Design patterns (DI, Factory, Strategy, Repository)
